@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 
 
 use App\Enums\CardsType;
-use App\Models\Play;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
-use phpDocumentor\Reflection\Types\Object_;
 
 class PlayController
 {
@@ -16,26 +14,32 @@ class PlayController
 
     public function play()
     {
-        $playerOne = User::whereHas('play', function ($query) {
-            $query->where('player', 1);
-        } )->first();
-        $playerTwo = User::whereHas('play', function ($query) {
-            $query->where('player', 2);
-        } )->first();
+        $playerOne = User::getPlayer(1);
+        $playerTwo = User::getPlayer(2);
 
         $response = Http::get(self::CARDS_URL);
         $cards = json_decode($response->body());
-        if ($playerOne->play->attempt === 0) {
+        if (!$playerOne->play->win && !$playerTwo->play->win) {
             for ($i = 0; $i < 2; $i++) {
                 $data = $this->getCard($cards);
-                array_push($playerOne->play->cards, $this->getCardsAbbreviation($data));
-                $playerOne->play->increment('points', $data->value);
-                $playerOne->play->cards = $playerOne->play->cards;
-                $playerOne->play->save();
-            }
-            $playerOne->play->increment('attempt');
+                $playCards = $playerOne->play->cards;
+                array_push($playCards, $this->getCardsAbbreviation($data));
+                $point = $this->getPoint($data->value);
 
-            dd($data, $cards);
+                $playerOne->play->increment('points', $point);
+                $playerOne->play->cards = $playCards;
+                $playerOne->play->save();
+
+                $data = $this->getCard($cards);
+                $playCards = $playerTwo->play->cards;
+                array_push($playCards, $this->getCardsAbbreviation($data));
+                $point = $this->getPoint($data->value);
+
+                $playerTwo->play->increment('points', $point);
+                $playerTwo->play->cards = $playCards;
+                $playerTwo->play->save();
+
+            }
         }
     }
 
@@ -52,5 +56,13 @@ class PlayController
     private function getCardsAbbreviation(\stdClass $data): string
     {
         return CardsType::CARDS[$data->suit] . $data->value;
+    }
+
+    private function getPoint(string $value): int
+    {
+        if (in_array($value,CardsType::CARDS_PICTURES)) {
+            return CardsType::POINTS[$value];
+        }
+        return (int) $value;
     }
 }

@@ -16,11 +16,11 @@ class CreatePlaysTable extends Migration
         Schema::create('plays', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->integer('attempt')->default(0);
             $table->integer('points')->default(0);
             $table->integer('round')->default(1);
             $table->enum('player', [1,2]);
-            $table->json('cards')->nullable();
+            $table->json('cards')->default('[]');
+            $table->integer('win')->default(0);
 
             $table->foreign('user_id')->references('id')->on('users');
         });
