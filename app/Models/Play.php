@@ -13,4 +13,5 @@ class Play extends Model
     protected $casts = [
         'cards' =>'array'
     ];
+    protected $fillable = ['round'];
 }

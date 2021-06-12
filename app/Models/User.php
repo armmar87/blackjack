@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -45,10 +46,21 @@ class User extends Authenticatable
         return $this->hasOne(Play::class)->orderBy('round', 'DESC');
     }
 
-    public static function getPlayer(int $player): self
+    public static function getLastRoundPlayers(): Collection
     {
-        return self::whereHas('play', function ($query) use ($player) {
-            $query->where('player', $player);
-        } )->first();
+        return self::select(['users.name', 'p.points', 'p.cards'])
+            ->leftJoin('plays as p', 'users.id', '=', 'p.user_id')
+            ->orderBy('p.round', 'DESC')
+            ->groupBy('users.id')
+            ->get();
+    }
+
+    public function saveCardsWithPoint(array $data): User
+    {
+        $this->play->increment('points', $data['point']);
+        $this->play->cards = $data['cards'];
+        $this->play->save();
+
+        return $this;
     }
 }

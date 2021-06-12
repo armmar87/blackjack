@@ -18,7 +18,6 @@ class CreatePlaysTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->integer('points')->default(0);
             $table->integer('round')->default(1);
-            $table->enum('player', [1,2]);
             $table->json('cards')->default('[]');
             $table->integer('win')->default(0);
 
