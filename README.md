@@ -8,7 +8,7 @@
 - Clonning or download project
 - Run `composer install` command
 - Create `.env` file in main repository
-- Copy `.env.example` content and past to `.env`
+- Copy `.env.example` content and past to `.env` file
 - Create DB for application
 - Run `php artisan migrate --seed` command
 - Run `php artisan serve` command
