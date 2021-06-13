@@ -12,3 +12,4 @@
 - Create DB for application
 - Run `php artisan migrate --seed` command
 - Run `php artisan serve` command
+- And call this endpoint `http://127.0.0.1:8000/api/play-blackjack`
