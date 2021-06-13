@@ -1,9 +1,9 @@
 
 
-## Instruction for installing blackjack
+# Instruction for installing blackjack
 
-# PHP version ^7.3
-# Laravel version ^8.40
+## PHP version ^7.3
+## Laravel version ^8.40
 
 - Clonning or download project
 - Run `composer install` command
