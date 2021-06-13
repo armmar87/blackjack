@@ -6,8 +6,9 @@ use Illuminate\Support\Facades\Http;
 
 class CardsService
 {
+    public $cards;
+    public $points;
     public $deckCards;
-    public $point;
     const CARDS_URL = 'https://pickatale-backend-case.herokuapp.com/shuffle';
 
     function __construct()
@@ -15,21 +16,23 @@ class CardsService
         $this->deckCards = json_decode(Http::get(self::CARDS_URL)->body());
     }
 
-    public function getPlayerCardsWithPoint(array $cards): array
+    public function setCardsWithPoint(array $cards): void
     {
-        $data = $this->getCard();
+        $data = $this->getPlayerCards();
         array_push($cards, $this->getCardsAbbreviation($data));
-        $point = $this->getPoint($data->value);
+        $points = $this->getPlayerPoints($data->value);
 
-        return compact('cards', 'point');
+        $this->points = $points;
+        $this->cards = $cards;
     }
 
-    private function getCard(): \stdClass
+    private function getPlayerCards(): \stdClass
     {
-        $count = count($this->deckCards);
-        $randomNumber = rand(0, $count - 1);
+        $count = count($this->deckCards) - 1;
+        $randomNumber = rand(0, $count);
         $card = $this->deckCards[$randomNumber];
         unset($this->deckCards[$randomNumber]);
+        sort($this->deckCards);
 
         return $card;
     }
@@ -39,11 +42,21 @@ class CardsService
         return CardsType::CARDS[$data->suit] . $data->value;
     }
 
-    private function getPoint(string $value): int
+    private function getPlayerPoints(string $value): int
     {
         if (in_array($value,CardsType::CARDS_PICTURES)) {
             return CardsType::POINTS[$value];
         }
         return (int) $value;
+    }
+
+    public function getCards()
+    {
+        return $this->cards;
+    }
+
+    public function getPoint()
+    {
+        return $this->points;
     }
 }

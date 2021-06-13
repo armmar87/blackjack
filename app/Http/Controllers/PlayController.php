@@ -8,52 +8,77 @@ use App\Models\User;
 
 class PlayController
 {
-    public function play()
+    private CardsService $cardsService;
+
+    function __construct(CardsService $cardsService)
+    {
+        $this->cardsService = $cardsService;
+    }
+
+    public function playBlackjack()
     {
         $playerOne = User::with('play')->find(1);
         $playerTwo = User::with('play')->find(2);
 
-        if (!$playerOne->play->win && !$playerTwo->play->win) {
-            $cardsService = new CardsService();
+        return $this->recursionForPlayers($playerOne, $playerTwo);
+    }
 
-            for ($i = 0; $i < 2; $i++) {
+    private function recursionForPlayers($playerOne, $playerTwo)
+    {
+        for ($i = 0; $i < 2; $i++) {
+            $this->cardsService->setCardsWithPoint($playerOne->play->cards);
+            $playerOne = $playerOne->saveCardsWithPoint($this->cardsService);
 
-                $playerOneData = $cardsService->getPlayerCardsWithPoint($playerOne->play->cards);
-                $playerOne = $playerOne->saveCardsWithPoint($playerOneData);
+            if ($playerOne->play->points == 21) {
+                $playerOne->play->win = 1;
+                $playerOne->play->save();
+                $players = User::getLastRoundPlayers();
 
-                $playerTwoData = $cardsService->getPlayerCardsWithPoint($playerTwo->play->cards);
-                $playerTwo = $playerTwo->saveCardsWithPoint($playerTwoData);
+                $playerOne->play()->create(['round' => $playerOne->play->round + 1]);
+                $playerTwo->play()->create(['round' => $playerTwo->play->round + 1]);
 
-                if ($playerOne->play->points == 21) {
-                    $playerOne->play->win = 1;
-                    $playerOne->play->save();
-                    $players = User::getLastRoundPlayers();
+                return response()->json(['winner' => $playerOne->name, 'players' => $players],200);
+            }
+            if ($playerOne->play->points > 21) {
+                $playerTwo->play->win = 1;
+                $playerTwo->play->save();
+                $players = User::getLastRoundPlayers();
 
-                    $playerOne->play()->create(['round' => $playerOne->play->round + 1]);
-                    $playerTwo->play()->create(['round' => $playerTwo->play->round + 1]);
+                $playerTwo->play()->create(['round' => $playerTwo->play->round + 1]);
+                $playerOne->play()->create(['round' => $playerOne->play->round + 1]);
 
-                    $results = [
-                        'winner' => $playerOne->name,
-                        'players' => $players
-                    ];
-                    return response()->json($results,200);
-                }
-
-                if ($playerTwo->play->points == 21) {
-                    $playerTwo->play->win = 1;
-                    $playerTwo->play->save();
-                    $players = User::getLastRoundPlayers();
-
-                    $playerTwo->play()->create(['round' => $playerTwo->play->round + 1]);
-                    $playerOne->play()->create(['round' => $playerOne->play->round + 1]);
-
-                    $results = [
-                        'winner' => $playerTwo->name,
-                        'players' => $players
-                    ];
-                    return response()->json($results,200);
-                }
+                return response()->json(['winner' => $playerTwo->name, 'players' => $players],200);
             }
         }
+
+        for ($i = 0; $i < 2; $i++) {
+            $this->cardsService->setCardsWithPoint($playerTwo->play->cards);
+            $playerTwo = $playerTwo->saveCardsWithPoint($this->cardsService);
+            if ($playerTwo->play->points == 21) {
+                $playerTwo->play->win = 1;
+                $playerTwo->play->save();
+                $players = User::getLastRoundPlayers();
+
+                $playerTwo->play()->create(['round' => $playerTwo->play->round + 1]);
+                $playerOne->play()->create(['round' => $playerOne->play->round + 1]);
+
+                return response()->json(['winner' => $playerTwo->name, 'players' => $players],200);
+            }
+            if ($playerTwo->play->points > 21) {
+                $playerOne->play->win = 1;
+                $playerOne->play->save();
+                $players = User::getLastRoundPlayers();
+
+                $playerOne->play()->create(['round' => $playerOne->play->round + 1]);
+                $playerTwo->play()->create(['round' => $playerTwo->play->round + 1]);
+
+                return response()->json(['winner' => $playerOne->name, 'players' => $players],200);
+            }
+        }
+
+        if ($playerOne->play->points < 17 || $playerOne->play->points > $playerTwo->play->points) {
+            return $this->recursionForPlayers($playerOne, $playerTwo);
+        }
+        return response()->json(['message' => 'No winner, play again', 'players' => User::getLastRoundPlayers()],200);
     }
 }

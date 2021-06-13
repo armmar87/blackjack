@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Collection;
+use App\Helpers\CardsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -46,19 +47,21 @@ class User extends Authenticatable
         return $this->hasOne(Play::class)->orderBy('round', 'DESC');
     }
 
-    public static function getLastRoundPlayers(): Collection
+    public static function getLastRoundPlayers(): array
     {
-        return self::select(['users.name', 'p.points', 'p.cards'])
-            ->leftJoin('plays as p', 'users.id', '=', 'p.user_id')
-            ->orderBy('p.round', 'DESC')
-            ->groupBy('users.id')
-            ->get();
+        return DB::select('SELECT `users`.`name`, `p`.`points`, `p`.`cards`
+            FROM `users`
+            LEFT JOIN (SELECT *
+            FROM `plays`
+            WHERE `id` IN (
+            SELECT MAX(`id`) FROM `plays` GROUP BY user_id
+            )) AS p ON users.id = p.user_id');
     }
 
-    public function saveCardsWithPoint(array $data): User
+    public function saveCardsWithPoint(CardsService $cardsService): User
     {
-        $this->play->increment('points', $data['point']);
-        $this->play->cards = $data['cards'];
+        $this->play->increment('points', $cardsService->points);
+        $this->play->cards = $cardsService->cards;
         $this->play->save();
 
         return $this;

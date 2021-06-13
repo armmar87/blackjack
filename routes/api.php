@@ -15,7 +15,7 @@ use \App\Http\Controllers\PlayController;
 |
 */
 
-Route::get('/play', [PlayController::class, 'play']);
+Route::get('/play-blackjack', [PlayController::class, 'playBlackjack']);
 
 //Route::middleware('auth:api')->get('/user', function (Request $request) {
 //    return $request->user();
