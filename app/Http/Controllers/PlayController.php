@@ -53,15 +53,22 @@ class PlayController
     protected function returnWinnerPlayer($playerOne, $playerTwo)
     {
         if ($playerOne->play->points == 21) {
-            $players = Play::saveWinner($playerOne, $playerTwo);
 
-            return Response::json(['winner' => $playerOne->name, 'players' => $players],200);
+            return $this->returnResponse($playerOne, $playerTwo);
         }
         if ($playerOne->play->points > 21) {
-            $players = Play::saveWinner($playerTwo, $playerOne);
 
-            return Response::json(['winner' => $playerTwo->name, 'players' => $players],200);
+            return $this->returnResponse($playerTwo, $playerOne);
         }
+
         return false;
+    }
+
+    protected function returnResponse($playerOne, $playerTwo)
+    {
+        return Response::json([
+            'winner' => $playerOne->name,
+            'players' => Play::saveWinner($playerOne, $playerTwo)
+        ],200);
     }
 }
