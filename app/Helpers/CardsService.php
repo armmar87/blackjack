@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Http;
 
 class CardsService
 {
-    public $cards;
-    public $points;
+    public array $cards;
+    public int $points;
     public $deckCards;
     const CARDS_URL = 'https://pickatale-backend-case.herokuapp.com/shuffle';
 
@@ -55,7 +55,7 @@ class CardsService
         return $this->cards;
     }
 
-    public function getPoint()
+    public function getPoints()
     {
         return $this->points;
     }
